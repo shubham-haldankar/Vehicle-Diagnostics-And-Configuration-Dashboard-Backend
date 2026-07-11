@@ -3,9 +3,11 @@ const Joi = require("joi");
 const db = require("./db");
 const { importLogs } = require("./parse");
 const cors = require("cors");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Load logs into db on startup
 // importLogs();
