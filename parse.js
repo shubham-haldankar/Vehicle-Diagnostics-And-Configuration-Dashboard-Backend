@@ -1,5 +1,5 @@
-const fs = require("fs");
-const db = require("./db");
+import fs from "fs";
+import db from "./db.js";
 
 function parseLogLine(line) {
   const match = line.match(
@@ -10,40 +10,51 @@ function parseLogLine(line) {
   return { dateTimeCreated, vehicleId, logType, code, message };
 }
 
-function importLogs(file = "vehicle_diagnostics_logs.txt") {
-  const hasRows = db
-    .prepare(
-      `
+async function importLogs(file = "vehicle_diagnostics_logs.txt") {
+  const hasLogs = await db.query(
+    `
       SELECT 1 FROM vehicle_diagnostics_logs LIMIT 1
   `,
-    )
-    .get();
+  );
 
-  if (hasRows) {
+  if (hasLogs.rows.length > 0) {
     return;
   }
 
   const lines = fs.readFileSync(file, "utf8").split("\n").filter(Boolean);
-  const insert = db.prepare(`
-    INSERT INTO vehicle_diagnostics_logs (dateTimeCreated, vehicleId, logType, code, message)
-    VALUES (@dateTimeCreated, @vehicleId, @logType, @code, @message)
-  `);
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
 
-  const checkExists = db.prepare(`
-    SELECT 1 FROM vehicle_diagnostics_logs WHERE dateTimeCreated = ? AND vehicleId = ? AND code = ?
-  `);
-
-  const transaction = db.transaction(() => {
     for (const line of lines) {
       const entry = parseLogLine(line);
+
       if (entry) {
-        // && !checkExists.get(entry.dateTimeCreated, entry.vehicleId, entry.code) // To avoid duplicates, uncomment this line if needed
-        insert.run(entry);
+        await client.query(
+          `
+          INSERT INTO vehicle_diagnostics_logs
+          (dateTimeCreated, vehicleId, logType, code, message)
+          VALUES ($1, $2, $3, $4, $5)
+          `,
+          [
+            entry.dateTimeCreated,
+            entry.vehicleId,
+            entry.logType,
+            entry.code,
+            entry.message,
+          ],
+        );
       }
     }
-  });
 
-  transaction();
+    await client.query("COMMIT");
+    console.log("Logs imported successfully");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
-module.exports = { importLogs };
+export { importLogs };
