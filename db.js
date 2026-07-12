@@ -15,7 +15,7 @@ const db = new Pool({
 
 // Initialize schema
 const schema = fs.readFileSync("schema.sql", "utf8");
-console.log("printing", process.env.DATABASE_URL);
+
 db.query(schema)
   .then(() => console.log("Schema initialized"))
   .catch((err) => console.error("Schema initialization error:", err));

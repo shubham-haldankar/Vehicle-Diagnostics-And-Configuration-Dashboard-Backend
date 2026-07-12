@@ -11,14 +11,24 @@ function parseLogLine(line) {
 }
 
 async function importLogs(file = "vehicle_diagnostics_logs.txt") {
-  const hasLogs = await db.query(
-    `
+  const tableExists = await db.query(`
+  SELECT EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'vehicle_diagnostics_logs'
+  );
+`);
+
+  if (tableExists.rows[0].exists) {
+    const hasLogs = await db.query(
+      `
       SELECT 1 FROM vehicle_diagnostics_logs LIMIT 1
   `,
-  );
+    );
 
-  if (hasLogs.rows.length > 0) {
-    return;
+    if (hasLogs.rows.length > 0) {
+      return;
+    }
   }
 
   const lines = fs.readFileSync(file, "utf8").split("\n").filter(Boolean);
