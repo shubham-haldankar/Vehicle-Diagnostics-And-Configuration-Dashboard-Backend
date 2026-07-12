@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Load logs into db on startup
-// importLogs();
+importLogs();
 
 app.get("/", (req, res) => {
   res.send("Hello Express!");
