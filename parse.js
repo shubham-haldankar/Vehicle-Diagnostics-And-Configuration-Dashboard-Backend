@@ -1,6 +1,8 @@
 import fs from "fs";
 import db from "./db.js";
 
+// Parse a single log line and extract dateTimeCreated, vehicleId, logType, code, and message
+// Returns an object with these fields if the line matches the expected format, otherwise null
 function parseLogLine(line) {
   const match = line.match(
     /\[(.*?)\] \[VEHICLE_ID:(.*?)] \[(.*?)\] \[CODE:(.*?)\] \[(.*?)\]/,
