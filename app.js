@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 await importLogs();
 
 const schema = Joi.object({
-  vehicle: Joi.string(),
+  vehicleid: Joi.string(),
   code: Joi.string(),
   from: Joi.date().iso(),
   to: Joi.date().iso(),
@@ -27,17 +27,34 @@ app.get("/logs", async (req, res) => {
 
     let sql = "SELECT * FROM vehicle_diagnostics_logs WHERE 1=1";
     const params = [];
+    let i = 1;
 
+    if (value.vehicleid) {
+      sql += ` AND "vehicleid" = $${i++}`;
+      params.push(value.vehicleid);
+    }
+
+    if (value.code) {
+      sql += ` AND "code" = $${i++}`;
+      params.push(value.code);
+    }
+
+    if (value.from) {
+      sql += ` AND "dateTimeCreated" >= $${i++}`;
+      params.push(value.from.toISOString());
+    }
+
+    if (value.to) {
+      sql += ` AND "dateTimeCreated" <= $${i++}`;
+      params.push(value.to.toISOString());
+    }
     const { rows } = await db.query(sql, params);
-
     return res.json(rows);
   } catch (err) {
     if (err && (err.isJoi || err.details)) {
-      return res
-        .status(400)
-        .json({
-          error: err.details ? err.details.map((d) => d.message) : err.message,
-        });
+      return res.status(400).json({
+        error: err.details ? err.details.map((d) => d.message) : err.message,
+      });
     }
     console.error(err);
     return res.status(500).json({ error: "internal server error" });
