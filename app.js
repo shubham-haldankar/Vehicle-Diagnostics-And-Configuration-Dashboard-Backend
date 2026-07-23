@@ -10,6 +10,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+  }),
+);
+
 // Load logs into db on startup
 await importLogs();
 
@@ -25,12 +31,13 @@ app.get("/logs", async (req, res) => {
     const { error, value } = schema.validate(req.query);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    let sql = "SELECT * FROM vehicle_diagnostics_logs WHERE 1=1";
+    let sql = `SELECT id, datetimecreated AS "dateTimeCreated", vehicleid AS "vehicleId",
+    logtype AS "type", code, message FROM vehicle_diagnostics_logs WHERE 1=1`;
     const params = [];
     let i = 1;
 
     if (value.vehicleid) {
-      sql += ` AND "vehicleid" = $${i++}`;
+      sql += ` AND "vehicleId" = $${i++}`;
       params.push(value.vehicleid);
     }
 
