@@ -1,4 +1,11 @@
 {
+  "name": "backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "test": "jest"
+  },
   "type": "module",
   "dependencies": {
     "cors": "^2.8.5",
